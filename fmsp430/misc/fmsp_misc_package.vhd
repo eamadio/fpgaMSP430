@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------------
---! Copyright (C) 2009 , Olivier Girard
+--! Copyright (C) 2017 , Emmanuel Amadio
 --
 --! Redistribution and use in source and binary forms, with or without
 --! modification, are permitted provided that the following conditions
@@ -27,57 +27,59 @@
 --
 ------------------------------------------------------------------------------
 --
---! @file fmsp_sync_cell.vhd
+--! @file fmsp_misc_package.vhd
 --! 
---! @brief fpgaMSP430 Generic synchronizer
+--! @brief fpgaMSP430 Miscellaneous package
 --
---! @author Olivier Girard,    olgirard@gmail.com
---! @author Emmanuel Amadio,   emmanuel.amadio@gmail.com (VHDL Rewrite)
+--! @author Emmanuel Amadio,   emmanuel.amadio@gmail.com
 --
 ------------------------------------------------------------------------------
 --! @version 1
 --! @date: 2017-04-21
 ------------------------------------------------------------------------------
 library ieee;
-    use ieee.std_logic_1164.all;	--! standard unresolved logic UX01ZWLH-
+	use ieee.std_logic_1164.all;	--! standard unresolved logic UX01ZWLH-
+	use ieee.numeric_std.all;		--! for the signed, unsigned types and arithmetic ops
+	use ieee.math_real.all;
 
-entity fmsp_sync_cell is 
-generic (
-	SYNC_EN	: boolean := true		--! Synchronize input
-);
-port (
-	--! INPUTs
-	clk		: in	std_logic;		--! Receiving clock
-	rst		: in	std_logic;		--! Receiving reset (active high)
-	data_in	: in	std_logic;		--! Asynchronous data input
-	--! OUTPUTs
-	data_out	: out	std_logic	--! Synchronized data output
-);
-end entity fmsp_sync_cell;
+package fmsp_misc_package is
 
-architecture RTL of fmsp_sync_cell is 
 
-	signal	data_sync	: std_logic_vector(1 downto 0);
+	component fmsp_and_gate is 
+	port (
+		--! INPUTs
+		a	: in	std_logic;	--! AND gate input A
+		b	: in	std_logic;	--! AND gate input B
+		--! OUTPUTs
+		y	: out	std_logic	--! AND gate outputt
+	);
+	end component fmsp_and_gate;
 
-begin
+	component fmsp_sync_reset is 
+	port (
+		--! INPUTs
+		clk		: in	std_logic;	--! Receiving clock
+		rst_a		: in	std_logic;	--! Asynchronous reset
+		--! OUTPUTs
+		rst_s		: out	std_logic	--! Synchronized resett
+	);
+	end component fmsp_sync_reset;
 
-	DATA_SYNC_REG : process(clk,rst)
-	begin
-		if (rst = '1') then
-			data_sync	<=	"00";
-		elsif rising_edge(clk) then
-			data_sync <= data_sync(0) & data_in;
-		end if;
-	end process DATA_SYNC_REG;
+	component fmsp_sync_cell is 
+	generic (
+		SYNC_EN	: boolean := true		--! Synchronize input
+	);
+	port (
+		--! INPUTs
+		clk		: in	std_logic;	--! Receiving clock
+		data_in	: in	std_logic;	--! Asynchronous data input
+		rst		: in	std_logic;	--! Receiving reset (active high)
+		--! OUTPUTs
+		data_out	: out	std_logic	--! Synchronized data output
+	);
+	end component fmsp_sync_cell;
 
-	DATA_MUX : process(data_sync(1),data_in)
-	begin
-		if (SYNC_EN	= true) then
-			data_out <= data_sync(1);
-		else
-			data_out <= data_in;
-		end if;
-	end process DATA_MUX;
+end fmsp_misc_package; --! fmsp_misc_package
 
-end RTL; --! fmsp_sync_cell
+
 
